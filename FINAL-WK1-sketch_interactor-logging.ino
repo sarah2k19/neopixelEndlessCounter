@@ -12,6 +12,11 @@
   File myFile;
 // Setup variable for real time clock
   RTC_DS1307 rtc;
+// Setup variable for timer and stopwatch function
+  unsigned long StartTime = 0; // variable to establish the start of a timer in millis
+  unsigned long CareTime = 0; // variable to calculated the time since start of a timer in millis
+  unsigned long StopTime;
+int PrintTimer;
 // Setup the buttons START -- STOP -- TIME-up -- TIME-down
   const int ButtonStart = 2;
   const int ButtonStop = 3;
@@ -96,8 +101,6 @@ void setup () {
 
 void loop () {
 // this is a comment
-
-  
 // Reset the button state for every loop
 /*  int ButtonStartState = 0;
   int ButtonStopState = 0;
@@ -130,6 +133,7 @@ void loop () {
       ButtonStartState = ReadingStart;
     // only toggle the log action if the new button state is HIGH
         if (ButtonStartState == HIGH) {
+          StartTime = millis(); 
           myFile = SD.open("datalog.txt", FILE_WRITE);
            if (myFile) {
               Serial.print("Writing Start to InteractorLog...");
@@ -138,19 +142,20 @@ void loop () {
               // close the file:
               myFile.close();
               Serial.println("done.");
-              } else {
-              // if the file didn't open, print an error:
-              Serial.println("error START opening datalog.txt");
-              }
-          } 
-//            else {
-//            // if the file didn't open, print an error:
-//            Serial.println("error START opening and reading datalog.txt");
-//            }
+            } else {
+            // if the file didn't open, print an error:
+            Serial.println("error START opening datalog.txt");
+            }
+        } 
+        else {
+        // if the Buttonstartstate is low the stopwatch is visualized in the LCD
+          counter ();
+          //Serial.println("error START opening and reading datalog.txt");
+        }
            delay(pushtime);
            digitalWrite(ButtonStartState, LOW);
-        }
-      }
+     }
+   }
     
     lastButtonStartState = ReadingStart;
 
@@ -166,20 +171,25 @@ void loop () {
       ButtonStopState = ReadingStop;
     
         if (ButtonStopState == HIGH) { // only toggle the log action if the new button state is HIGH
+          StopTime = CareTime; //create variable StopTime to log elapsed time
+          StartTime = 0; //reset StartTime
+          CareTime = 0; //reset CareTime
           myFile = SD.open("datalog.txt", FILE_WRITE);
            if (myFile) {
               Serial.print("Writing Stop to InteractorLog...");
+              myFile.print("Care time: "); // logging the elapsed time between start and stop as CareTime
+              myFile.print(StopTime/1000);
+              myFile.println(" seconds");
               myFile.print("Time stop: ");
               dateprint();
               // close the file:
               myFile.close();
               Serial.println("done.");
-      //        checklog();
               } else {
               // if the file didn't open, print an error:
               Serial.println("error STOP opening datalog.txt");
               }
-            } 
+           } 
 //            else {
 //              // if the file didn't open, print an error:
 //              Serial.println("error STOP opening and reading datalog.txt");
@@ -266,27 +276,28 @@ void loop () {
 }
 
 void dateprint() {
-
-//Create current time label and print it to the serial port
- 
+//Create current time label and print it to the SD card and LCD
     DateTime now = rtc.now();
-
     myFile.print(now.year(), DEC);
     myFile.print('/');
     myFile.print(now.month(), DEC);
     myFile.print('/');
     myFile.print(now.day(), DEC);
     myFile.print(" ");
- ///  myFile.print(" (");
- //   myFile.print(daysOfTheWeek[now.dayOfTheWeek()]);
- //   myFile.print(") ");
     myFile.print(now.hour(), DEC);
     myFile.print(':');
     myFile.print(now.minute(), DEC);
     myFile.print(':');
     myFile.print(now.second(), DEC);
     myFile.println();
-    delay(pushtime);
+
+    lcd.setCursor(8,0);             // move to the middle of the first line
+    lcd.print(now.hour(), DEC);
+    lcd.print(':');
+    lcd.print(now.minute(), DEC);
+    lcd.print(':');
+    lcd.print(now.second(), DEC);
+    delay(1000); //debounce for use of buttons
 }
 
 void checklog (){
@@ -301,4 +312,15 @@ void checklog (){
           // close the file:
           myFile.close();
         }
+}
+
+void counter (){ // visualize the count-up time on the LCD in seconds
+      if (StartTime > 0) {CareTime = (millis() - StartTime);}       
+      
+      if (CareTime > 1000) {
+        PrintTimer = CareTime/1000;
+        lcd.setCursor(0,9);
+        lcd.print(PrintTimer);  //visualize Caretime in seconds on LCD
+        lcd.print("     ");  // clearing previous parts of LCD
+      } 
 }
