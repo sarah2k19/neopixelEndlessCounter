@@ -244,12 +244,18 @@ void showTime() {
 }
 
 void LED() { 
-  if (pixelCount >= 12){
+  int secondPixelCount = pixelCount - 12;
+  if (pixelCount < 12){
+    pixelColor = pixels.Color(0,0,100); 
+    pixels.setBrightness(5); 
+    pixels.setPixelColor(pixelCount,pixelColor); 
+    pixels.show();
+  } else if (pixelCount <24) {
+      pixelColor = pixels.Color(0,100,0); 
+      pixels.setBrightness(5); 
+      pixels.setPixelColor(secondPixelCount,pixelColor); 
+      pixels.show();
+  } else {
     pixelCount = 0;
-    pixels.clear();
   }
-  pixelColor = pixels.Color(0,0,100); 
-  pixels.setBrightness(5); 
-  pixels.setPixelColor(pixelCount,pixelColor); 
-  pixels.show();
 }
