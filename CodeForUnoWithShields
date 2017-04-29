@@ -214,14 +214,16 @@ void stepUp() {
    
     if (stopState == 0 && startState == 1) {
         showTime();
-        pixelCount += 1;
-          if (seconds <= 59) {
+        if (seconds % 6 == 0 ) {
+          pixelCount += 1;
+        }
+        if (seconds <= 59) {
           seconds += 1;
-          } 
-          if (seconds > 59) {
+        } 
+        if (seconds > 59) {
           seconds = 00;
           minutes += 1;
-          }
+        }
       }
     }
 }
