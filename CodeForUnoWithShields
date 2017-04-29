@@ -106,7 +106,7 @@ Serial.begin(57600);
   lcd.setCursor(0,0);             
   lcd.print("Interactor v2.0");  
   lcd.setCursor(0,1);              
-  lcd.print("READY"); 
+  lcd.print("GEREED"); 
 
   pixels.begin(); // This initializes the NeoPixel library.
   pixels.show();
@@ -160,7 +160,7 @@ void dateprint() {
 
 void stopTimer(){
   if (stopState == 1 && startState == 0) {
-    lcd.print("STOP             ");
+    lcd.print("GESTOPT             ");
 //    myFile.close(); // in case of interuption START... data is saved
     myFile = SD.open("datalog.txt", FILE_WRITE);
     if (myFile) {     // logging the ellapsed time after Start was initiated by the user, to the SD file
@@ -173,6 +173,9 @@ void stopTimer(){
       // if the file didn't open, print an error:
       Serial.println("error STOP opening datalog.txt");
     }
+    // Print to lcd to reset the Interactor
+     lcd.setCursor(0,1);              
+     lcd.print("Klik op X"); 
   }
   stopState = 0;
 }
