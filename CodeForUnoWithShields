@@ -175,7 +175,7 @@ void stopTimer(){
     }
     // Print to lcd to reset the Interactor
      lcd.setCursor(0,1);              
-     lcd.print("Klik op X"); 
+     lcd.print("Klik op reset"); 
   }
   stopState = 0;
 }
