@@ -1,23 +1,24 @@
 /* This programm creates a time log after the user used buttons to start and stop. 
 The time is either counting up or down on a LCD screen and is made visual with a led ring. 
 
-The LCD keypad shield I used is attatched: 
-see also https://www.dfrobot.com/wiki/index.php/Arduino_LCD_KeyPad_Shield_(SKU:_DFR0009)
-    Analoog  0  Buttons
-    Digitaal 4  DB4
-    Digitaal 5  DB5
-    Digitaal 6  DB6
-    Digitaal 7  DB7
-    Digitaal 8  RS (Data of signaal selectie beeldscherm)
-    Digitaal 9  Enable
-    Digitaal 10 Backlight controle
+The microprocessor is a Adafruit Feather 32u4 Adalogger 
+see also https://blog.adafruit.com/2015/11/11/new-product-adafruit-feather-32u4-adalogger/
 
-    So the buttons are analoge for this project are all on analoge 1
+The LCD we used is a LCD Display 16*2 characters with white text and blue backlight:  
+see also http://www.tinytronics.nl/shop/nl/display/lcd-display-16*2-karakters-met-witte-tekst-en-blauwe-backlight?search=lcd
+    Adalogger Analoog  0  Buttons 
+    9         Digitaal 4  DB4     
+    10        Digitaal 5  DB5     
+    11        Digitaal 6  DB6     
+    12        Digitaal 7  DB7     
+    6         Digitaal 8  RS (Data of signaal selectie beeldscherm)
+    5         Digitaal 9  Enable
+    n/a       Digitaal 10 Backlight controle
 
-For datalogging we used a Datalogger shield with SD and RTC.
-see also https://learn.adafruit.com/adafruit-data-logger-shield
+For RTC we used RTC DS1307 met AT24C32 eeprom incl. Batterij
+see also http://www.tinytronics.nl/shop/nl/diversen/tijd/rtc-ds1307-met-at24c32-eeprom-incl.-batterij?search=rtc
 
-The led lights use the pins: 3
+The led lights use pin: 13 
 */
 
 // INCLUDES:
@@ -34,6 +35,9 @@ The led lights use the pins: 3
 File myFile;
 RTC_DS1307 rtc;
 
+// Setup variable for SD adalogger
+#define cardSelect 4
+
 // Setup variable for timer
 int hours = 0; // start hours
 int minutes = 0; //start min
@@ -49,7 +53,8 @@ Mark Bramwell, July 2010
   the screen will show the corresponding one.
 Connection: Plug the LCD Keypad to the UNO(or other controllers)
 **************************************************************************************/
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7);           // select the pins used on the LCD panel
+// LiquidCrystal lcd(8, 9, 4, 5, 6, 7);           // select the pins used on the LCD panel
+LiquidCrystal lcd(6, 5, 9, 10, 11, 12);           // for adalogger  
 
 // define some values used by the panel and buttons
 int lcd_key     = 0;
@@ -73,7 +78,7 @@ int read_LCD_buttons(){               // read the buttons
     return btnNONE;                // when all others fail, return this.
 }
 // define variables for LED circle
-#define PIN            3
+#define PIN            13
 #define NUMPIXELS      12
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 int pixelCount = 0;
@@ -88,7 +93,7 @@ Serial.begin(57600);
   if (! rtc.isrunning()) {
   Serial.println("RTC is NOT running!");
   } 
-  if (!SD.begin()) {
+  if (!SD.begin(cardSelect)) {
   Serial.println("Initialization SD failed!");
   }
 
