@@ -1,0 +1,273 @@
+/* This programm creates a time log after the user used buttons to start and stop. 
+The time is either counting up or down on a LCD screen and is made visual with a led ring. 
+
+The microprocessor is a Adafruit Feather 32u4 Adalogger 
+see also https://blog.adafruit.com/2015/11/11/new-product-adafruit-feather-32u4-adalogger/
+
+The LCD we used is a LCD Display 16*2 characters with white text and blue backlight:  
+see also http://www.tinytronics.nl/shop/nl/display/lcd-display-16*2-karakters-met-witte-tekst-en-blauwe-backlight?search=lcd
+    Adalogger Analoog  0  Buttons 
+    9         Digitaal 4  DB4     
+    10        Digitaal 5  DB5     
+    11        Digitaal 6  DB6     
+    12        Digitaal 7  DB7     
+    6         Digitaal 8  RS (Data of signaal selectie beeldscherm)
+    5         Digitaal 9  Enable
+    n/a       Digitaal 10 Backlight controle
+
+For RTC we used RTC DS1307 met AT24C32 eeprom incl. Batterij
+see also http://www.tinytronics.nl/shop/nl/diversen/tijd/rtc-ds1307-met-at24c32-eeprom-incl.-batterij?search=rtc
+
+The led lights use pin: 13 
+*/
+
+// INCLUDES:
+// *****************
+#include <Wire.h>
+#include "RTClib.h"
+#include <SPI.h>
+#include <SD.h>
+#include <LiquidCrystal.h> //for LCD
+#include <Adafruit_NeoPixel.h> //for LED
+
+// DEFINITIONS:
+//*****************
+File myFile;
+RTC_DS1307 rtc;
+
+// Setup variable for SD adalogger
+#define cardSelect 4
+
+// Setup variable for timer
+int hours = 0; // start hours
+int minutes = 0; //start min
+int seconds = 0; //start seconds
+boolean stopState = 0;
+boolean startState = 0;
+boolean startLog = 0;
+//int count;
+unsigned long previousMillis = 0;
+/*************************************************************************************
+Mark Bramwell, July 2010
+  This program will test the LCD panel and the buttons.When you push the button on the shield，
+  the screen will show the corresponding one.
+Connection: Plug the LCD Keypad to the UNO(or other controllers)
+**************************************************************************************/
+// LiquidCrystal lcd(8, 9, 4, 5, 6, 7);           // select the pins used on the LCD panel
+LiquidCrystal lcd(6, 5, 9, 10, 11, 12);           // for adalogger  
+
+// define some values used by the panel and buttons
+int lcd_key     = 0;
+int adc_key_in  = 0;
+
+#define btnRIGHT  0
+#define btnUP     1
+#define btnDOWN   2
+#define btnLEFT   3
+#define btnSELECT 4
+#define btnNONE   5
+
+// initialize colours of NeoPixel
+int r = 255;
+int g = 255;
+int b = 255;
+
+int read_LCD_buttons(){               // read the buttons
+    adc_key_in = analogRead(0);       // read the value from the sensor 
+     if (adc_key_in > 1000) return btnNONE;    
+     if (adc_key_in < 50)   return btnRIGHT;  
+     if (adc_key_in < 195)  return btnUP; 
+     if (adc_key_in < 380)  return btnDOWN; 
+     if (adc_key_in < 555)  return btnLEFT; 
+     if (adc_key_in < 790)  return btnSELECT;   
+    return btnNONE;                // when all others fail, return this.
+}
+// define variables for LED circle
+#define PIN            13
+#define NUMPIXELS      12
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+int pixelCount = 0;
+uint32_t pixelColor;
+
+void setup(){
+//  while (!Serial); // for Leonardo/Micro/Zero
+Serial.begin(57600);
+  if (! rtc.begin()) {
+  Serial.println("Couldn't find RTC");
+  }  
+  if (! rtc.isrunning()) {
+  Serial.println("RTC is NOT running!");
+  } 
+  if (!SD.begin(cardSelect)) {
+  Serial.println("Initialization SD failed!");
+  }
+
+// Create file for logging
+  myFile = SD.open("datalog.txt", FILE_WRITE);
+  if (myFile) {
+    myFile.print("Start Logging sequence: ");
+    dateprint();
+    myFile.close();
+  } else {
+    Serial.println("error opening datalog.txt");
+  }
+  
+  lcd.begin(16, 2);               
+  lcd.setCursor(0,0);             
+  lcd.print("Interactor v2.0");  
+  lcd.setCursor(0,1);              
+  lcd.print("GEREED"); 
+
+  pixels.begin(); // This initializes the NeoPixel library.
+  pixels.show();
+}
+
+void loop(){
+   lcd.setCursor(0,0);             // move to the begining of the first line
+   lcd_key = read_LCD_buttons();   // read the buttons
+   switch (lcd_key){               // depending on which button was pushed, we perform an action
+       case btnRIGHT:{             
+            lcd.print("START          ");
+            startState = 1;
+            stopState = 0;
+            startLog = 1;
+            break;
+       }
+       case btnLEFT:{
+            stopState = 1;
+            startState = 0;
+            break;
+       }    
+       case btnSELECT:{
+            lcd.print("CHECKLOG        ");  //  push button "SELECT" and show the word on the screen
+            checklog();
+            break;
+       }
+       case btnNONE:{
+            stepUp();
+            stopTimer();
+            break;
+       }
+   }
+}
+
+void dateprint() {
+//Create current time label and print it to the SD card
+    DateTime now = rtc.now();
+    myFile.print(now.year(), DEC);
+    myFile.print('/');
+    myFile.print(now.month(), DEC);
+    myFile.print('/');
+    myFile.print(now.day(), DEC);
+    myFile.print(" ");
+    myFile.print(now.hour(), DEC);
+    myFile.print(':');
+    myFile.print(now.minute(), DEC);
+    myFile.print(':');
+    myFile.print(now.second(), DEC);
+    myFile.println();
+}
+
+void stopTimer(){
+  if (stopState == 1 && startState == 0) {
+    lcd.print("GESTOPT             ");
+//    myFile.close(); // in case of interuption START... data is saved
+    myFile = SD.open("datalog.txt", FILE_WRITE);
+    if (myFile) {     // logging the ellapsed time after Start was initiated by the user, to the SD file
+      myFile.print("Caretime: ");
+      logCounter();
+      myFile.print("Time stop: ");
+      dateprint();
+      myFile.close();
+    } else {
+      // if the file didn't open, print an error:
+      Serial.println("error STOP opening datalog.txt");
+    }
+    // Print to lcd to reset the Interactor
+     lcd.setCursor(0,1);              
+     lcd.print("Klik op reset"); 
+  }
+  stopState = 0;
+}
+
+void checklog(){ // re-open the file for reading and check during programming:
+  myFile = SD.open("datalog.txt");
+  if (myFile) {
+    Serial.println("datalog.txt:"); 
+    while (myFile.available()) { // read from the file until there's nothing else in it:
+      Serial.write(myFile.read());
+    }
+    myFile.close();
+  }
+}
+
+void logCounter() {
+  (minutes < 10) ? myFile.print("0") : DEC;
+  myFile.print(minutes);
+  myFile.print(":");
+  (seconds < 10) ? myFile.print("0") : DEC;
+  myFile.print(seconds);
+  myFile.println();
+}
+ 
+void stepUp() {
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= 1000){
+    previousMillis = currentMillis; 
+    
+    if (stopState == 0 && startState == 1 && startLog == 1) {
+      myFile = SD.open("datalog.txt", FILE_WRITE);
+      if (myFile) {
+        myFile.print("Time start: ");
+        dateprint();
+        myFile.close();
+      } 
+      startLog = 0;
+    }
+   
+    if (stopState == 0 && startState == 1) {
+        showTime();
+        if (seconds % 6 == 0 ) {
+          pixelCount += 1;
+        }
+        if (seconds <= 59) {
+          seconds += 1;
+        } 
+        if (seconds > 59) {
+          seconds = 00;
+          minutes += 1;
+        }
+      }
+    }
+}
+
+void showTime() {
+  lcd.setCursor(0,2);
+  (hours < 10 && hours > 0) ? lcd.print("0") : DEC;
+  (hours > 0) ? lcd.print(hours) : DEC;
+  (hours > 0) ? lcd.print(":") : DEC;
+  (minutes < 10) ? lcd.print("0") : DEC;
+  lcd.print(minutes);
+  lcd.print(":");
+  (seconds < 10) ? lcd.print("0") : DEC;
+  lcd.print(seconds); 
+  lcd.print("                 ");
+  
+  LED();
+}
+
+void LED() { 
+  if (pixelCount < 12){
+    pixelColor = pixels.Color(r, g, b); 
+    pixels.setBrightness(5);
+    pixels.setPixelColor(pixelCount,pixelColor); 
+    pixels.show();
+  } else {
+    pixelCount = 0;
+    if (r > 40) {
+      r = r - 40; 
+    } else {
+        r = 255;
+    }
+  }
+}
