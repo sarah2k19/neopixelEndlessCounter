@@ -1,0 +1,34 @@
+// initialize colours of NeoPixel
+int r = 255;
+int g = 255;
+int b = 255;
+boolean guard = false;
+int pixelCount = 0;
+uint32_t pixelColor;
+
+void LED() { 
+  int secondPixelCount = pixelCount - 12;
+  if (pixelCount < 12){
+    if (pixelCount == 0 && guard) {
+      guard = false;
+      g = g - 40;
+      b = b - 40;
+    }
+    pixelColor = pixels.Color(r, g, b); 
+    pixels.setBrightness(20);
+    pixels.setPixelColor(pixelCount,pixelColor); 
+    pixels.show();
+  } else if (pixelCount < 24) {
+      if (pixelCount == 12 && !guard) {
+        guard = true;
+        g = g - 40;
+        b = b - 40;
+      }
+      pixelColor = pixels.Color(r,g,b); 
+      pixels.setBrightness(20); 
+      pixels.setPixelColor(secondPixelCount,pixelColor); 
+      pixels.show();
+    } else {
+      pixelCount = 0;
+    }
+}
