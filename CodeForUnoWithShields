@@ -45,6 +45,7 @@ int seconds = 0; //start seconds
 boolean stopState = 0;
 boolean startState = 0;
 boolean startLog = 0;
+boolean resetState = 0;
 int buttonDelay = 500;
 unsigned long previousMillis = 0;
 /*************************************************************************************
