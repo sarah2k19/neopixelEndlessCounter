@@ -129,11 +129,11 @@ void loop(){
             break;
        }    
        case btnUP:{
-            checklog();
+            reset();
             delay(buttonDelay);
             break;
        }
-         case btnDOWN:{
+       case btnDOWN:{
             reset();         
             delay(buttonDelay);
             break;
