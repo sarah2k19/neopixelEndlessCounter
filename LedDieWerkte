@@ -8,27 +8,37 @@ uint32_t pixelColor;
 
 void LED() { 
   int secondPixelCount = pixelCount - 12;
-  if (pixelCount < 12){
-    if (pixelCount == 0 && guard) {
-      guard = false;
-      g = g - 40;
-      b = b - 40;
-    }
+  int thirdPixelCount = secondPixelCount - 12;
+  int fourthPixelCount = thirdPixelCount - 12;
+  int fifthPixelCount = fourthPixelCount - 12;
+  
+  if (pixelCount < 12){                       //white
     pixelColor = pixels.Color(r, g, b); 
     pixels.setBrightness(20);
     pixels.setPixelColor(pixelCount,pixelColor); 
     pixels.show();
-  } else if (pixelCount < 24) {
-      if (pixelCount == 12 && !guard) {
-        guard = true;
-        g = g - 40;
-        b = b - 40;
-      }
-      pixelColor = pixels.Color(r,g,b); 
+  } else if (pixelCount < 24) {               //blue
+      pixelColor = pixels.Color(0,0,b); 
       pixels.setBrightness(20); 
       pixels.setPixelColor(secondPixelCount,pixelColor); 
+      pixels.show();
+  } else if (pixelCount < 36) {             //green
+      pixelColor = pixels.Color(0, g, 0);
+      pixels.setBrightness(20); 
+      pixels.setPixelColor(thirdPixelCount,pixelColor); 
+      pixels.show();
+  } else if (pixelCount < 48) {             //yellow
+      pixelColor = pixels.Color(r, g, 0);
+      pixels.setBrightness(20); 
+      pixels.setPixelColor(fourthPixelCount,pixelColor); 
+      pixels.show();
+    } else if (pixelCount < 60) {             //red
+      pixelColor = pixels.Color(r, 0, 0);
+      pixels.setBrightness(20); 
+      pixels.setPixelColor(fifthPixelCount,pixelColor); 
       pixels.show();
     } else {
       pixelCount = 0;
     }
 }
+
