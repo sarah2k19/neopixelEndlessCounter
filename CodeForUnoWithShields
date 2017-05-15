@@ -179,10 +179,11 @@ void stopTimer(){
       Serial.println("error STOP opening datalog.txt");
     }
     // Print to lcd to reset the Interactor
-     lcd.setCursor(0,1);              
-     lcd.print("Klik op reset"); 
+     lcd.setCursor(9,0);              
+     lcd.print("Reset?"); 
   }
   stopState = 0;
+  resetState = 1;
 }
 
 void reset(){
@@ -210,6 +211,7 @@ void showStart(){
   lcd.print("GEREED"); 
 
   pixels.begin(); // This initializes the NeoPixel library.
+  pixels.clear();
   pixels.show();
 }
 
@@ -286,31 +288,31 @@ void LED() {
   int fifthPixelCount = fourthPixelCount - 12;
   
   if (pixelCount < 12){                       //white
-    pixelColor = pixels.Color(r, g, b); 
+    pixelColor = pixels.Color(255,255,255); 
     pixels.setBrightness(20);
     pixels.setPixelColor(pixelCount,pixelColor); 
     pixels.show();
   } else if (pixelCount < 24) {               //blue
-      pixelColor = pixels.Color(0,0,b); 
+      pixelColor = pixels.Color(0,0,255); 
       pixels.setBrightness(20); 
       pixels.setPixelColor(secondPixelCount,pixelColor); 
       pixels.show();
   } else if (pixelCount < 36) {             //green
-      pixelColor = pixels.Color(0, g, 0);
+      pixelColor = pixels.Color(0,255,0);
       pixels.setBrightness(20); 
       pixels.setPixelColor(thirdPixelCount,pixelColor); 
       pixels.show();
   } else if (pixelCount < 48) {             //yellow
-      pixelColor = pixels.Color(r, g, 0);
+      pixelColor = pixels.Color(255,255, 0);
       pixels.setBrightness(20); 
       pixels.setPixelColor(fourthPixelCount,pixelColor); 
       pixels.show();
     } else if (pixelCount < 60) {             //red
-      pixelColor = pixels.Color(r, 0, 0);
+      pixelColor = pixels.Color(255, 0, 0);
       pixels.setBrightness(20); 
       pixels.setPixelColor(fifthPixelCount,pixelColor); 
       pixels.show();
     } else {
-      pixelCount = 0;
+      pixelCount = -1;
     }
 }
