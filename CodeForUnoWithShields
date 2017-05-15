@@ -81,7 +81,8 @@ int read_LCD_buttons(){               // read the buttons
 #define PIN            13
 #define NUMPIXELS      12
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-int pixelCount = 0;
+int secondsCont = 0;
+int pixelCount = -1;
 uint32_t pixelColor;
 
 void setup(){
@@ -196,6 +197,8 @@ void reset(){
       minutes = 0;
       seconds = 0;
       stopState = 0;
+      secondsCont = 0;
+      pixelCount = -1;
       showStart();
 }
 
@@ -234,7 +237,7 @@ void stepUp() {
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= 1000){
     previousMillis = currentMillis; 
-    
+    secondsCont += 1;  
     if (stopState == 0 && startState == 1 && startLog == 1) {
       myFile = SD.open("datalog.txt", FILE_WRITE);
       if (myFile) {
@@ -247,7 +250,7 @@ void stepUp() {
    
     if (stopState == 0 && startState == 1) {
         showTime();
-        if (seconds % 6 == 0 ) {
+        if (secondsCont % 25 == 0 ) {
           pixelCount += 1;
         }
         if (seconds <= 59) {
@@ -278,17 +281,36 @@ void showTime() {
 
 void LED() { 
   int secondPixelCount = pixelCount - 12;
-  if (pixelCount < 12){
-    pixelColor = pixels.Color(0,0,100); 
-    pixels.setBrightness(5); 
+  int thirdPixelCount = secondPixelCount - 12;
+  int fourthPixelCount = thirdPixelCount - 12;
+  int fifthPixelCount = fourthPixelCount - 12;
+  
+  if (pixelCount < 12){                       //white
+    pixelColor = pixels.Color(r, g, b); 
+    pixels.setBrightness(20);
     pixels.setPixelColor(pixelCount,pixelColor); 
     pixels.show();
-  } else if (pixelCount <24) {
-      pixelColor = pixels.Color(0,100,0); 
-      pixels.setBrightness(5); 
+  } else if (pixelCount < 24) {               //blue
+      pixelColor = pixels.Color(0,0,b); 
+      pixels.setBrightness(20); 
       pixels.setPixelColor(secondPixelCount,pixelColor); 
       pixels.show();
-  } else {
-    pixelCount = 0;
-  }
+  } else if (pixelCount < 36) {             //green
+      pixelColor = pixels.Color(0, g, 0);
+      pixels.setBrightness(20); 
+      pixels.setPixelColor(thirdPixelCount,pixelColor); 
+      pixels.show();
+  } else if (pixelCount < 48) {             //yellow
+      pixelColor = pixels.Color(r, g, 0);
+      pixels.setBrightness(20); 
+      pixels.setPixelColor(fourthPixelCount,pixelColor); 
+      pixels.show();
+    } else if (pixelCount < 60) {             //red
+      pixelColor = pixels.Color(r, 0, 0);
+      pixels.setBrightness(20); 
+      pixels.setPixelColor(fifthPixelCount,pixelColor); 
+      pixels.show();
+    } else {
+      pixelCount = 0;
+    }
 }
