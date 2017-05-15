@@ -45,7 +45,7 @@ int seconds = 0; //start seconds
 boolean stopState = 0;
 boolean startState = 0;
 boolean startLog = 0;
-//int count;
+int buttonDelay = 500;
 unsigned long previousMillis = 0;
 /*************************************************************************************
 Mark Bramwell, July 2010
@@ -53,7 +53,7 @@ Mark Bramwell, July 2010
   the screen will show the corresponding one.
 Connection: Plug the LCD Keypad to the UNO(or other controllers)
 **************************************************************************************/
-// LiquidCrystal lcd(8, 9, 4, 5, 6, 7);           // select the pins used on the LCD panel
+// LiquidCrystal lcd(8, 9, 4, 5, 6, 7);           // for UNO whith LCD shield
 LiquidCrystal lcd(6, 5, 9, 10, 11, 12);           // for adalogger  
 
 // define some values used by the panel and buttons
@@ -70,11 +70,11 @@ int adc_key_in  = 0;
 int read_LCD_buttons(){               // read the buttons
     adc_key_in = analogRead(0);       // read the value from the sensor 
      if (adc_key_in > 1000) return btnNONE;    
-     if (adc_key_in < 50)   return btnRIGHT;  
-     if (adc_key_in < 195)  return btnUP; 
-     if (adc_key_in < 380)  return btnDOWN; 
-     if (adc_key_in < 555)  return btnLEFT; 
-     if (adc_key_in < 790)  return btnSELECT;   
+     if (adc_key_in > 915)  return btnLEFT;     // stop blue-wire
+     if (adc_key_in > 840)  return btnUP;       // up-reset yellow-wire
+     if (adc_key_in > 770)  return btnDOWN;     // down-reset green-wire
+     if (adc_key_in > 720)  return btnRIGHT;    // start black-wire
+     if (adc_key_in < 500)  return btnNONE;   
     return btnNONE;                // when all others fail, return this.
 }
 // define variables for LED circle
@@ -106,15 +106,7 @@ Serial.begin(57600);
   } else {
     Serial.println("error opening datalog.txt");
   }
-  
-  lcd.begin(16, 2);               
-  lcd.setCursor(0,0);             
-  lcd.print("Interactor v2.0");  
-  lcd.setCursor(0,1);              
-  lcd.print("GEREED"); 
-
-  pixels.begin(); // This initializes the NeoPixel library.
-  pixels.show();
+ showStart();
 }
 
 void loop(){
@@ -126,16 +118,23 @@ void loop(){
             startState = 1;
             stopState = 0;
             startLog = 1;
+            delay(buttonDelay);
             break;
        }
        case btnLEFT:{
             stopState = 1;
             startState = 0;
+            delay(buttonDelay);
             break;
        }    
-       case btnSELECT:{
-            lcd.print("CHECKLOG        ");  //  push button "SELECT" and show the word on the screen
+       case btnUP:{
             checklog();
+            delay(buttonDelay);
+            break;
+       }
+         case btnDOWN:{
+            reset();         
+            delay(buttonDelay);
             break;
        }
        case btnNONE:{
@@ -183,6 +182,32 @@ void stopTimer(){
      lcd.print("Klik op reset"); 
   }
   stopState = 0;
+}
+
+void reset(){
+      myFile = SD.open("datalog.txt", FILE_WRITE);
+      if (myFile) {
+        myFile.print("Time reset: ");
+        dateprint();
+        myFile.println();
+        myFile.close();
+      } 
+      hours = 0;
+      minutes = 0;
+      seconds = 0;
+      stopState = 0;
+      showStart();
+}
+
+void showStart(){
+  lcd.begin(16, 2);               
+  lcd.setCursor(0,0);             
+  lcd.print("Interactor v2.0");  
+  lcd.setCursor(0,1);              
+  lcd.print("GEREED"); 
+
+  pixels.begin(); // This initializes the NeoPixel library.
+  pixels.show();
 }
 
 void checklog(){ // re-open the file for reading and check during programming:
