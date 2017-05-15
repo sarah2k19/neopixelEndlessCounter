@@ -188,20 +188,22 @@ void stopTimer(){
 }
 
 void reset(){
-      myFile = SD.open("datalog.txt", FILE_WRITE);
-      if (myFile) {
-        myFile.print("Time reset: ");
-        dateprint();
-        myFile.println();
-        myFile.close();
-      } 
-      hours = 0;
-      minutes = 0;
-      seconds = 0;
-      stopState = 0;
-      secondsCont = 0;
-      pixelCount = -1;
-      showStart();
+    if (stopState == 0 && startState == 0 && resetState == 1) {
+        myFile = SD.open("datalog.txt", FILE_WRITE);
+          if (myFile) {
+            myFile.print("Time reset: ");
+            dateprint();
+            myFile.println();
+            myFile.close();
+          } 
+          hours = 0;
+          minutes = 0;
+          seconds = 0;
+          stopState = 0;
+          secondsCont = 0;
+          pixelCount = -1;
+          showStart();
+      }
 }
 
 void showStart(){
@@ -240,7 +242,7 @@ void stepUp() {
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= 1000){
     previousMillis = currentMillis; 
-    secondsCont += 1;  
+    
     if (stopState == 0 && startState == 1 && startLog == 1) {
       myFile = SD.open("datalog.txt", FILE_WRITE);
       if (myFile) {
@@ -253,6 +255,7 @@ void stepUp() {
    
     if (stopState == 0 && startState == 1) {
         showTime();
+        secondsCont += 1;  
         if (secondsCont % 25 == 0 ) {
           pixelCount += 1;
         }
